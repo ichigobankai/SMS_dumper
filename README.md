@@ -52,5 +52,5 @@ directly via email.
 Ichigo <github@ultimate-consoles.fr>
 
 My friend X-death have made a silimar dumper but for Megadrive/Genesis (Md Dumper)
-Available on his Github page :
-https://github.com/X-death25/STM32_Projects/tree/master/Megadrive_HID
+
+Available on his Github page : https://github.com/X-death25/STM32_Projects/tree/master/Megadrive_HID
