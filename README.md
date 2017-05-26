@@ -10,9 +10,9 @@ Support :
 * Read and write S-ram on Master System Mapper
 * can re-write flash eprom on my pcb (with sega mapper clone)
 
-Dump 128kB : 4s
-write 128kb : 21s (erase/write and verif)
-
+Speed (can vary depend on USB) :
+* Dump 128kB : 4s
+* write 128kb : 21s (erase/write and verif)
 
 This firmware is targetting the cheapest STM32F103 board as found in
 numerous listings on eBay and Aliexpress (might have the following
