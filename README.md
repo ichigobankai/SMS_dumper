@@ -1,6 +1,6 @@
 # SMS dumper
 
-This project is a very low cost USB reader/writer** for Sega Master System cartridges.
+This project is a very low cost USB reader/writer(1) for Sega Master System cartridges.
 HID code is based on libopencm3 ARM Lib & paulfertser/stm32-tx-hid ( https://github.com/paulfertser/stm32-tx-hid)
 
 Support :
@@ -8,13 +8,13 @@ Support :
 * Codemasters mapper
 * Korean "large" mapper (type Jang Pung III)
 * Read and write S-ram (Master System Mapper)
-** can re-write flash eprom on my pcb
+* can re-write flash eprom on my pcb(1)
 
 Speed (can vary depend on USB) :
 * Dump 128kB : 4s
-** write 128kb : 21s (erase/write and verif)
+* write 128kb : 21s (erase/write and verif)(1)
 
-**only working with my sega mapper clone/pcb
+(1)only working with my sega mapper clone/pcb
 
 This firmware is targetting the cheapest STM32F103 board as found in
 numerous listings on eBay and Aliexpress (might have the following
