@@ -7,7 +7,7 @@ Support :
 * Sega Master System mapper (Sms/Mark3, SG-1000/SC-3000/Othello Multivision)
 * Codemasters mapper
 * Korean "large" mapper (type Jang Pung III)
-* Read and write S-ram on Master System Mapper
+* Read and write S-ram (Master System Mapper)
 * can re-write flash eprom on my pcb (with sega mapper clone)
 
 Speed (can vary depend on USB) :
