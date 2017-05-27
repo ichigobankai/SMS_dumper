@@ -43,7 +43,7 @@ bootloader. For the first method a suitable debug adapter is needed
 USB-UART bridge (the only requirement that is a bit unusual is to
 support "even" parity).
 
-The image to be flashed is "megadrive-hid-bootldr-combined.bin", it
+The image to be flashed is "smsdumper_stm32_bootANDsoft.bin", it
 contains both a DFU-compliant bootloader and the main firmware. 
 
 If you have any suggestions or questions, feel free to contact me
