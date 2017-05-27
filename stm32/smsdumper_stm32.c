@@ -340,20 +340,22 @@ void mapper_write_register(){
    	GPIO_BRR(GPIOA)  |= CLK_273N2;
    	GPIO_BSRR(GPIOA) |= CLK_273N2;
    	
-	if(!buffer_in[7]){ GPIO_BSRR(GPIOB) |= M7; } //M0-7 sega as a15 (alternativ)
-
-   	enable_cart();
     GPIO_ODR(GPIOB) = (buffer_in[4]<<8); //MAPPER page D0-D7
+   	enable_cart();
+	if((buffer_in[7]==3 && address>0x7FFF) && hid_interrupt==SMS_READ){  //4Pak mapper
+		GPIO_BSRR(GPIOB) |= M7 | (MREQ << 16); 
+		}else{ 
+		GPIO_BRR(GPIOB) |= M7 | MREQ; 
+	}
+	if(buffer_in[7]==1 && hid_interrupt==SMS_READ){ GPIO_BSRR(GPIOB) |= M7; }
 	GPIO_BRR(GPIOA) |= WE;
-	//only used by codemasters
-	if(buffer_in[7]==1 && hid_interrupt==SMS_READ){ 
+	if(buffer_in[7]==2 && hid_interrupt==SMS_READ){ //codemasters mapper
 		GPIO_BRR(GPIOB) |= CLOCK;
 		GPIO_BSRR(GPIOB) |= CLOCK;
 	}
     __asm__("nop");
 	GPIO_BSRR(GPIOA) |= WE;
 	disable_cart();
-	if(!buffer_in[7]){ GPIO_BRR(GPIOB) |= M7; }
 }
 
 
@@ -361,16 +363,19 @@ void read_cartridge(){
   	unsigned char adr = 0;
 
     GPIO_CRL(GPIOA) = 0x44433443; //out Clk1-3, et MRclear
-    GPIO_CRH(GPIOA) = 0x44444333; //all out CE, etc. 50mhz
-	GPIO_CRL(GPIOB) = 0x43433444;  //set clock/mreq for codemasters mapper
+	GPIO_CRH(GPIOA) = 0x44444333; //all out CE, etc. 50mhz
+	GPIO_CRL(GPIOB) = 0x43433444;  //set clock/mreq for codemasters mapper, M0-7(=A15 on some MS old games)
   	
 	//Clk273n1, Clk273n2, Clk273n3, WE = High - Clear273
   	GPIO_BSRR(GPIOA) |= (CLK_273N1 | CLK_273N2 | WE | CE | OE) | (CLEAR_273 << 16);
     GPIO_BSRR(GPIOA) |= CLEAR_273; //active 273.
 	
-	if(buffer_in[7]==1){ GPIO_BSRR(GPIOB) |= CLOCK | (MREQ << 16); } //codemasters
-	if(buffer_in[3]){ mapper_write_register(); }
+	if(buffer_in[7]==2){ //codemasters
+		GPIO_BSRR(GPIOB) |= CLOCK | (MREQ << 16); 
+	}
 	
+	if(buffer_in[3]){ mapper_write_register(); }
+
  	while(adr < 64){
         GPIO_CRH(GPIOB) = 0x33333333; //set pb8-15 as data OUT
 
@@ -384,6 +389,10 @@ void read_cartridge(){
     	GPIO_BRR(GPIOA) |= CLK_273N2; //low
     	GPIO_BSRR(GPIOA) |= CLK_273N2; //high
 		
+
+		if(buffer_in[7]==1 && address>0x7FFF){ GPIO_BSRR(GPIOB) |= M7; }else{ GPIO_BRR(GPIOB) |= M7; }
+//		if(buffer_in[7]==3 && address>0x7FFF){ GPIO_BSRR(GPIOB) |= M7; }else{ GPIO_BRR(GPIOB) |= M7; }
+
         GPIO_CRH(GPIOB) = 0x44444444; //set pb8-15 as data IN
 		
 		enable_cart();
