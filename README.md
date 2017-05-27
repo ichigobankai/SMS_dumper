@@ -12,7 +12,7 @@ Support :
 
 Speed (can vary depend on USB) :
 * Dump 128kB : 4s
-* write 128kb : 21s (erase/write and verif)(1)
+* write 128kB : 21s (erase/write and verif)(1)
 
 (1)only working with my sega mapper clone/pcb
 
