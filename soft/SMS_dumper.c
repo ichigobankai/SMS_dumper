@@ -23,7 +23,7 @@ ICHIGO 2017
 #define SMS_WRITE_FLASH     0x14  // Write Flash
 #define SMS_ERASE_FLASH     0x15  // Erase Flash
 
-const char * ext[] = {".sms",".sg", ".sc", ".bin"};
+const char * ext[] = {".sms",".sg", ".sc"};
 
 unsigned int crc32(unsigned int seed, const void* data, int data_size){
 
@@ -76,7 +76,7 @@ int main(){
     unsigned char *buffer_rom = NULL;
     unsigned char *buffer_flash = NULL;
     
-    char gameName[128];
+    char gameName[64];
     int ext_num = 0;
     unsigned long address = 0;
     unsigned long gameSize = 0;
@@ -129,7 +129,7 @@ int main(){
             return 0;
         }
     }	
-    printf(" SMS Dumper detected!\n");
+    printf(" SMS Dumper detected");
  
     HIDcommand[0] = SMS_WAKEUP;
     rawhid_send(0, HIDcommand, 64, 30);
@@ -137,7 +137,7 @@ int main(){
         connect = rawhid_recv(0, buffer_recv, 64, 30);
         if(buffer_recv[0]!=0xFF){
  		   	printf("-------------------------\n");
-           	printf(" Error reading\n Exit\n\n");
+           	printf("\n Error reading\n Exit\n\n");
            	rawhid_close(0);
             return 0;
         }else{
@@ -160,23 +160,26 @@ int main(){
     	
     case 1:  // DUMP ROM
 	    printf("\n-------MAPPER TYPE-------\n");
-   		printf(" 1. Sega\n");
-   		printf(" 2. SG-1000/Othello Multivision\n");
-   		printf(" 3. SC-3000\n");
-	    printf(" 4. Codemasters\n");
-	    printf(" 5. Korean\n");
-//	    printf(" 4. Korean MSX 8kb\n");
-//	    printf(" 6. 4pak all action (Ozi)\n");
-	    printf(" 7. Exit\n");
+   		printf("  1. Sega\n");
+   		printf("  2. SG-1000/Othello Multivision\n");
+   		printf("  3. SC-3000\n");
+	    printf("  4. Codemasters\n");
+	    printf("  5. Korean 1MB\n");
+	    printf("  6. Korean MSX 8kb\n");
+	    printf("  7. Korean X-in-1\n");
+	    printf("  8. Korean \"Jangun\"\n");
+	    printf("  9. SG1000 Taiwan Msx\n");
+	    printf(" 10. 4 Pak All Action\n");
+	    printf(" 11. Exit\n");
 	    printf(" Enter your choice: ");
 	    scanf("%d", &choixMapperType);
    	
-   		if(choixMapperType<7){
+   		if(choixMapperType<11){
     	printf("-------------------------\n");
         printf(" Size to dump in KB: ");
         scanf("%ld", &gameSize);
         printf(" Rom's name (no space/no ext): ");
-        scanf("%32s", gameName);
+        scanf("%610s", gameName);
 
    		printf("-------------------------\n");
         HIDcommand[0] = SMS_READ;
@@ -191,96 +194,116 @@ int main(){
 			microsec_start = clock();
 		#endif	
 	
-		//only for testing / debug - ONLY SEGA
-        switch(choixMapperType){
-        	case 1: 
-        		ext_num = 0; //.sms
-        		HIDcommand[7] = 0; //SEGA mapper activ M0-7
- 			   	slotSize = 16384; //16ko
+		/*
+		
+		#define MAPPER_SMS_Korean_MSX_8KB				(12)
+		// 8KB bank-switching (4 banks) 2KB/bnk 1 - 0x0002 || addr == 0x0003 || addr == 0x0004)
+		
+		#define MAPPER_SMS_Korean_Janggun				(13)
+		// 8KB bank-switching (4 banks) mixed with 16KB bank-switching
+		
+		#define MAPPER_SMS_4PakAllAction				(14)
+		
+		#define MAPPER_SG1000_Taiwan_MSX_Adapter_TypeA	(15)
+		// 8KB RAM from 0x2000->0x3FFF + regular 2KB ram in 0xC000-0xFFFF range
+		
+		#define MAPPER_SMS_Korean_Xin1					(16)
+		// Mapping register at 0xFFFF to map 32 KB at 0x0000->0x8000 //easy
+		
+		*/
+		
+        ext_num = 0; //default ext .sms 
+  		slotSize = 16384; //default slotsize
+        HIDcommand[7] = 0;
+ 		
+       	switch(choixMapperType){
+        	case 1: //sega
+        		HIDcommand[7] = 1; //SEGA mapper add M0-7 as A15/OE
 	       		break;
-        	case 2:
+        	case 2: //sg1000
         		ext_num = 1; //.sg
-        		HIDcommand[7] = 0;
- 			   	slotSize = 16384;
+        		HIDcommand[7] = 1;
 	       		break;
-        	case 3:
+        	case 3: //sc3000
         		ext_num = 2; //.sc
-        		HIDcommand[7] = 0;
- 			   	slotSize = 16384;
+        		HIDcommand[7] = 1;
 	       		break;	       		
-        	case 4:
-        		ext_num = 0; //.sms
-        		HIDcommand[7] = 1; //use Mreq and Clock
-  			   	slotSize = 16384; //16ko
+        	case 4: //codemasters
+        		HIDcommand[7] = 2; //use Mreq and Clock
 	      		break;
-        	case 5: 
-         		ext_num = 0; //.sms
+        	case 5: //korean "jang pung 3"
        			HIDcommand[7] = 0;
- 			   	slotSize = 16384; //16ko
 	       		break;				
-        	case 6: 
-        		ext_num = 0; //.sms
-        		HIDcommand[7] = 1;  //use Mreq, Clock, M0-7(a15)
- 			   	slotSize = 16384; //16ko - 0x4000
- 			   	//Write zz to BFFF: map bank ((xx&0x30)+(zz))&maxbankmask to memory slot in 8000-BFFF region
+        	case 6: //korean max8kb
+        		HIDcommand[7] = 0;
+				slotSize = 2048;
 	       		break;	
-//        	case 3: 
-//        		strcat(gameName, "_korean.sms"); 
-//        		HIDcommand[7] = 0; //SEGA mapper
-// 			   	slotSize = 16384; //16ko - 0x4000
-//	       		break;	
-        	default: 
-        		ext_num = 3; //.bin
-       			HIDcommand[7] = 0;
-        		break;
+        	case 7: //korean x-in-1
+        		HIDcommand[7] = 4;
+	       		break;	
+        	case 8: //korean "janggun"
+        		HIDcommand[7] = 0;
+	       		break;	
+        	case 9: //SG1000 taiwan
+        		HIDcommand[7] = 0;
+	       		break;	
+        	case 10: //4 Pak
+        		HIDcommand[7] = 3;  //use Mreq - M0-7
+	       		break;
         }
-   	     
-  	       
+	       
         while(address < totalGameSize){
-        	/*
-        	sega mapper
-        	dump 16ko per page = 256 * 64bytes blocs
-			max 256 pages (0xFF) 32mbits
-        	slot0 16k - 0x0000 to 0x3FFF	A14=0 	A15=0
-        	slot1 16k - 0x4000 to 0x7FFF 	A14=1 	A15=0
-        	slot2 16k - 0x8000 to 0xBFFF 	A14=0	A15=1
-        	*/
-      		HIDcommand[3] = 0; //default no mapper
 
+      		HIDcommand[3] = 0; //default no mapper
+	    	HIDcommand[4] = (address/slotSize); //page MAPPER		    	
+ 
         	if(address<0x4000){
         		slotAdr = address;
         		switch(choixMapperType){
 	        		case 1: slotRegister = 0xFFFD;	HIDcommand[3] = 1; break;
 	        		case 4: slotRegister = 0;		HIDcommand[3] = 1; break;
-	        		case 6: slotRegister = 0x3FFE;	HIDcommand[3] = 1; break;
+	        		case 6: 
+			        		if(address<0x800){ slotRegister = 0;  HIDcommand[3] = 1;}
+			        		else if(address<0x1000){ slotRegister = 1; HIDcommand[3] = 1;}
+			        		else if(address<0x1800){ slotRegister = 2; HIDcommand[3] = 1;}
+			        		else{ slotRegister = 3; HIDcommand[3] = 1;}
+			        		break;
+	        		case 10: slotRegister = 0x3FFE; HIDcommand[3] = 1; break;
+	        		default: slotRegister = 0;		HIDcommand[3] = 0;
         		}
+        		
         	}else if(address<0x8000){
         		slotAdr = address;
         		switch(choixMapperType){
 	        		case 1: slotRegister = 0xFFFE;	HIDcommand[3] = 1; break;
 	        		case 4: slotRegister = 0x4000;	HIDcommand[3] = 1; break;
-	        		case 6: slotRegister = 0x7FFF;	HIDcommand[3] = 1; break;
+	        		case 6: slotRegister = 3; 		HIDcommand[3] = 1; break;
+	        		case 10: slotRegister = 0x7FFE;	HIDcommand[3] = 1; break;
+	        		default: slotRegister = 0;		HIDcommand[3] = 0;
         		}
+	    		    	       		
         	}else if(address>0x7FFF){
         		switch(choixMapperType){
-	        		case 1: slotRegister = 0xFFFF;	HIDcommand[3] = 1; break;
+	        		case 1: //sega
+	        		case 7: //x-in1 map 0-0x7FFF
+	        		case 8: //janggun
+	        				slotRegister = 0xFFFF;	HIDcommand[3] = 1; break;
 	        		case 4: slotRegister = 0x8000;	HIDcommand[3] = 1; break;
 	        		case 5: slotRegister = 0xA000;	HIDcommand[3] = 1; break;
-	        		case 6: slotRegister = 0xBFFF;	HIDcommand[3] = 1; break;
+	        		case 6: slotRegister = 3; 		HIDcommand[3] = 1; break;
+	        		case 10: slotRegister = 0xBFFE;	HIDcommand[3] = 1; break;
+	        		default: slotRegister = 0;		HIDcommand[3] = 0;
         		}
-        	slotAdr = 0x8000 + (address & 0x3FFF);     	
+        		
+	        	if(HIDcommand[7]!=4){
+	        		slotAdr = 0x8000 + (address & 0x3FFF);     	
+	        		}else{
+	        		slotAdr = 0x8000 + (address & 0x7FFF);     	        		
+	        	}
         	}
 		        
             HIDcommand[1] = slotAdr & 0xFF;				//lo adr
-            HIDcommand[2] = (slotAdr & 0xFF00)>>8; 		//hi adr
-		    
-		    if(choixMapperType==6){
-		    	slotRegister = 0x3FFE;
-		    	HIDcommand[3] = 1;
-		   	 	HIDcommand[4] = 2;  					//page MAPPER
-		    	}else{
-		    	HIDcommand[4] = (address/slotSize);		//page MAPPER		    	
-		    }
+            HIDcommand[2] = (slotAdr & 0xFF00)>>8; 		//hi adr	    
 		    HIDcommand[5] = (slotRegister & 0xFF); 		//reg MAPPER lo adr
 		    HIDcommand[6] = (slotRegister & 0xFF00)>>8; //reg MAPPER hi adr
 
@@ -289,7 +312,7 @@ int main(){
 
             address += 64 ;
 
-            printf("\r ROM dump in progress: %lu%%", ((100 * address)/totalGameSize));
+            printf("\r ROM dump in progress: %lu%% reg:%04X page:%02X/%02lX size:%dKB", ((100 * address)/totalGameSize), slotRegister, HIDcommand[4], (totalGameSize/slotSize)-1, slotSize);
             fflush(stdout);
 
         }
@@ -310,6 +333,9 @@ int main(){
 	    fclose(myfile);
    		
    		}else{
+	        printf("\n");
+   			free(buffer_rom);
+   			rawhid_close(0);
 			return 0; //exit	
    		}
         break;	
@@ -318,7 +344,7 @@ int main(){
     case 2: //DUMP S/F-RAM
     	printf("\n-------DUMP S-RAM--------\n");
        	printf(" Sram's name (no space/no ext): ");
-        scanf("%32s", gameName);
+        scanf("%60s", gameName);
    		printf("-------------------------\n");
 
         HIDcommand[0] = SMS_READ;
@@ -365,7 +391,7 @@ int main(){
 		
    		printf("\n-------------------------\n");
         printf(" SRAM dump complete! \n");
-		myfile = fopen(gameName,"wb"); //extension en fontcion du support ? .sms, .sg, .bin (default)
+		myfile = fopen(gameName,"wb");
 	    fwrite(buffer_rom, 1, totalGameSize, myfile);
 	    fclose(myfile);
     	break;
@@ -385,10 +411,12 @@ int main(){
 
        	if(choixSousMenu == 1){
 	       	printf(" SRAM file : ");
-	        scanf("%32s", gameName);
+	        scanf("%60s", gameName);
 			myfile = fopen(gameName,"rb");
 		    if(myfile == NULL){
 		    	printf(" FLASH file %s not found !\n Exit\n\n", gameName);
+   				free(buffer_rom);
+   				rawhid_close(0);
 		        return 0;
 		    }
 		    fread(buffer_rom, 1, totalGameSize, myfile);
@@ -400,6 +428,8 @@ int main(){
       	   	printf(" Erase SRAM\n");
         }else{
         printf("\n");
+		free(buffer_rom);
+   		rawhid_close(0);
 		return 0;        	
         }
         printf("-------------------------\n");
@@ -440,17 +470,17 @@ int main(){
 		
    		printf("\n-------------------------\n");
         printf(" SRAM write complete! \n");
-
     	break;
 
 	case 4: //WRITE FLASH
 		
         printf("\n-------WRITE FLASH-------\n");
 	    printf(" FILE to write: ");
-	    scanf("%32s", gameName);
+	    scanf("%60s", gameName);
 		myfile = fopen(gameName,"rb");
 	    if(myfile == NULL){
 	    	printf(" FLASH file %s not found !\n Exit\n\n", gameName);
+   			rawhid_close(0);
 	        return 0;
 	    }
 	    fseek(myfile, 0, SEEK_END);
@@ -459,8 +489,9 @@ int main(){
 	    
 	    if(totalGameSize>524288){
 	    	printf(" FLASH file too big!\n Max 524288 bytes (file : %lu)\nExit\n\n", totalGameSize);
+   			rawhid_close(0);
 	        return 0;	    	
-	    }
+   		}
 	    
 	    buffer_flash = (unsigned char*)malloc(totalGameSize); 
 	    fread(buffer_flash, 1, totalGameSize, myfile);
@@ -476,8 +507,9 @@ int main(){
 
  		while(verif < 0xBF40){     	
 		    verif = 0;
-	      	HIDcommand[0] = SMS_READ; //set mapper page 0
-	        HIDcommand[1] = 0;
+	      	HIDcommand[0] = SMS_READ;	//common
+	        HIDcommand[1] = 0; 		  	//common
+	        
 	        HIDcommand[2] = 0;
 	      	HIDcommand[3] = 1;
 		    HIDcommand[4] = 0;
@@ -487,7 +519,6 @@ int main(){
 	        rawhid_recv(0, buffer_rom, 64, 30);
 			verif += check_buffer(0, (unsigned char *)buffer_rom, 64);
 			
-	      	HIDcommand[0] = SMS_READ; //set mapper page 1
 	        HIDcommand[1] = 0x00;
 	        HIDcommand[2] = 0x40;
 	      	HIDcommand[3] = 1;
@@ -498,7 +529,6 @@ int main(){
 	        rawhid_recv(0, buffer_rom, 64, 30);
 			verif += check_buffer(0, (unsigned char *)buffer_rom, 64);
 			
-	      	HIDcommand[0] = SMS_READ; //set mapper page 2
 	        HIDcommand[1] = 0x00;
 	        HIDcommand[2] = 0x80;
 	      	HIDcommand[3] = 1;
@@ -563,7 +593,7 @@ int main(){
 	            rawhid_recv(0, buffer_recv, 64, 100);
         	}
             address += 32;
-            printf("\r FLASH write: %lu%%", ((100 * address)/totalGameSize));
+            printf("\r FLASH write: %lu%% reg:%04X page:%02X", ((100 * address)/totalGameSize), slotRegister, HIDcommand[4]);
             fflush(stdout);
         }
 
@@ -610,7 +640,8 @@ int main(){
 		#endif
 		
 		printf("\n-------------------------\n");
-
+		printf(" Pg | Rom    | File   | State\n");
+		printf("-------------------------\n");
 		while(page<(totalGameSize/slotSize)){
 			checksum_rom = 0;
 			checksum_flash = 0;
@@ -619,18 +650,17 @@ int main(){
 				checksum_flash += buffer_flash[i];
 				i++;
 			}
-			printf(" Page %03d: ", page);
-			printf("file 0x%06lX", checksum_flash);
-			printf(" - flash 0x%06lX", checksum_rom);
-			if(checksum_rom!= checksum_flash){ printf(" !BAD!\n");}else{printf(" (good)\n");}
+			printf(" %02X | %06lX | %06lX ", page, checksum_flash, checksum_rom);
+			if(checksum_rom!= checksum_flash){ printf("| BAD!\n");}else{printf("| Good\n");}
 			page++;
 		}
 		printf("-------------------------\n");
-	 	
     	break;
   
     default:
-	    rawhid_close(0);
+        printf("\n");
+   		free(buffer_rom);
+   		rawhid_close(0);
         return 0; 
     }
     
@@ -650,8 +680,10 @@ int main(){
 		unsigned int i=0, checksum_rom=0;
 		unsigned char page=0, j=0, k=0, l=0;
 		
-		printf("  Rom crc: %08X \n", crc32(0, buffer_rom, totalGameSize));
-
+		printf(" CRC32 Rom: %08X \n", crc32(0, buffer_rom, totalGameSize));
+		printf("-------------------------\n");
+		printf(" Pg | Dump   | Infos\n");
+		printf("-------------------------\n");
 		while(page<(totalGameSize/slotSize)){
 			checksum_rom = 0;
 			while(i<(slotSize*(page+1))){
@@ -659,8 +691,7 @@ int main(){
 				i++;
 			}
 			buffer_checksum[page] = checksum_rom;
-			printf(" Page %03d: ", page);
-			printf("%06X", checksum_rom);
+			printf(" %02X | %06X |", page, checksum_rom);
 			
 			if(page>0){ //skip 1st page...
 				k=0;
@@ -669,11 +700,11 @@ int main(){
 		        		k=1;
 		        	}
 		    	}
-		    	if(checksum_rom == 0x27E000|| checksum_rom == 0x3FC000){k=1;} //overdump 32k or my mapper
+		    	if(checksum_rom == 0x27E000|| checksum_rom == 0x3FC000){k=1;} //overdump
 			}
 			if(k){
 				if(l){
-					printf(" (overdump? %dKB?)\n", (l*(slotSize/1024)));
+					printf(" overdump? %dKB?\n", (l*(slotSize/1024)));
 				}
 				}else{
 				printf("\n");
@@ -683,6 +714,7 @@ int main(){
 		}
 		printf("-------------------------\n\n");
 	}
+    rawhid_close(0);
 	free(buffer_rom);
 	free(buffer_flash);
     return 0;
