@@ -13,7 +13,7 @@ ifeq ($(OS), LINUX)
 TARGET = $(PROG)
 CC = gcc
 STRIP = strip
-CFLAGS = -Wall -O2 -DOS_$(OS)
+CFLAGS = -Wall -O2 -DOS_$(OS) -std=c99
 LIBS = -lusb
 else ifeq ($(OS), MACOSX)
 TARGET = $(PROG)
